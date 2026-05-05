@@ -30,7 +30,7 @@ from pyscf import __config__
 import ctypes
 
 
-def get_veff(ks_grad, mol=None, dm=None):
+def get_veff(ks_grad, mol=None, dm=None, hermi=1):
     '''
     First order derivative of DFT effective potential matrix (wrt electron coordinates)
 
@@ -49,6 +49,7 @@ def get_veff(ks_grad, mol=None, dm=None):
     max_memory = max(2000, ks_grad.max_memory*.9-mem_now)
     if ks_grad.grid_response:
         exc, vxc = get_vxc_full_response(ni, mol, grids, mf.xc, dm,
+                                         hermi=hermi,
                                          max_memory=max_memory,
                                          verbose=ks_grad.verbose)
         if mf.do_nlc():
@@ -58,12 +59,14 @@ def get_veff(ks_grad, mol=None, dm=None):
                 xc = mf.nlc
             enlc, vnlc = get_nlc_vxc_full_response(
                 ni, mol, nlcgrids, xc, dm,
+                hermi=hermi,
                 max_memory=max_memory, verbose=ks_grad.verbose)
             exc += enlc
             vxc += vnlc
         logger.debug1(ks_grad, 'sum(grids response) %s', exc.sum(axis=0))
     else:
         exc, vxc = get_vxc(ni, mol, grids, mf.xc, dm,
+                           hermi=hermi,
                            max_memory=max_memory, verbose=ks_grad.verbose)
         if mf.do_nlc():
             if ni.libxc.is_nlc(mf.xc):
@@ -72,6 +75,7 @@ def get_veff(ks_grad, mol=None, dm=None):
                 xc = mf.nlc
             enlc, vnlc = get_nlc_vxc(
                 ni, mol, nlcgrids, xc, dm,
+                hermi=hermi,
                 max_memory=max_memory, verbose=ks_grad.verbose)
             vxc += vnlc
     t0 = logger.timer(ks_grad, 'vxc', *t0)
